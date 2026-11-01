@@ -1,1 +1,7 @@
 data/
+.quarto/
+*_files/
+*.pdf
+*.html
+*.log
+*.tex

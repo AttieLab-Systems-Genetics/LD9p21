@@ -1,0 +1,296 @@
+/*-- scss:defaults --*/
+
+// Brand colors (Tailwind Slate-50 light theme with vibrant scientific accents)
+$body-bg: #f8fafc;
+$body-color: #1e293b;
+$link-color: #0284c7;
+$link-color-hover: #e11d48;
+$selection-bg: #e2e8f0;
+
+// Typography
+$font-family-sans-serif: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+$presentation-title-color: #0f172a;
+$presentation-subtitle-color: #0284c7;
+$heading-color: #0f172a;
+
+// Heading sizes & weights
+$presentation-title-font-size: 2.6em;
+$presentation-subtitle-font-size: 1.3em;
+
+/*-- scss:rules --*/
+
+
+.reveal {
+  font-size: 28px;
+
+  h1, h2, h3, h4 {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  h1 {
+    font-size: 2.2em;
+  }
+
+  h2 {
+    color: #0284c7;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 0.15em;
+    margin-bottom: 0.4em;
+    font-size: 1.35em;
+  }
+
+  h3 {
+    color: #334155;
+    font-size: 1.05em;
+    margin-top: 0.3em;
+  }
+
+  // Links styling
+  a {
+    color: #0284c7;
+    transition: color 0.2s ease;
+    text-decoration: none;
+    &:hover {
+      color: #0369a1;
+      text-decoration: underline;
+    }
+  }
+
+  // Code blocks
+  pre {
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.08);
+    background: #f1f5f9 !important;
+
+    code {
+      background: transparent !important;
+      padding: 0.75rem;
+      font-size: 0.65em;
+      line-height: 1.35;
+      color: #0f172a;
+    }
+  }
+
+  // Inline code styling (backticks) - calibrated to match adjacent text size
+  code:not(pre code) {
+    font-family: var(--r-code-font, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace);
+    font-size: 0.88em !important;
+    background-color: #f1f5f9;
+    padding: 0.06em 0.28em;
+    border-radius: 4px;
+    color: #0369a1;
+    border: 1px solid #e2e8f0;
+    vertical-align: baseline;
+    line-height: inherit;
+    font-weight: 500;
+  }
+
+  li code:not(pre code),
+  p code:not(pre code),
+  td code:not(pre code),
+  th code:not(pre code),
+  span code:not(pre code) {
+    font-size: 0.88em !important;
+  }
+
+  // Lists styling
+  ul, ol {
+    margin-bottom: 0.5em;
+    li {
+      margin-bottom: 0.2em;
+      line-height: 1.35;
+    }
+  }
+
+  // Incremental lists micro-animation
+  .fragment {
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  // Callout styling overrides for RevealJS
+  .callout {
+    border-left-width: 6px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    margin: 0.45rem 0 !important;
+    background-color: #ffffff !important;
+
+    &.callout-note { border-color: #0284c7 !important; }
+    &.callout-tip { border-color: #059669 !important; }
+    &.callout-warning { border-color: #d97706 !important; }
+    &.callout-caution { border-color: #dc2626 !important; }
+    &.callout-important { border-color: #7c3aed !important; }
+
+    .callout-header {
+      font-weight: 600;
+      color: #0f172a;
+      font-size: 0.85em;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      padding-bottom: 0.15rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .callout-body {
+      font-size: 0.8em;
+      color: #334155;
+      line-height: 1.35;
+    }
+  }
+
+  // Slide footer styling
+  .footer {
+    font-size: 0.45em;
+    color: #64748b;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 0.4em;
+  }
+
+  // Slide number styling
+  .slide-number {
+    font-size: 0.5em;
+    color: #64748b;
+    background-color: transparent;
+  }
+
+  // Blockquote styling
+  blockquote {
+    font-size: 0.82em !important;
+    line-height: 1.4 !important;
+    color: #475569 !important;
+    border-left: 4px solid #38bdf8 !important;
+    padding: 0.3em 0.8em !important;
+    margin: 0.45rem 0 !important;
+    background: #f0f9ff !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    box-sizing: border-box;
+    text-align: left;
+    font-style: italic;
+    border-radius: 4px;
+  }
+
+  // Tables
+  table {
+    font-size: 0.75em;
+    border-collapse: collapse;
+    width: 100%;
+    margin: 0.5em 0;
+    background: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+    th {
+      background-color: #0f172a;
+      color: #ffffff;
+      padding: 0.45em 0.6em;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    td {
+      padding: 0.4em 0.6em;
+      border-bottom: 1px solid #e2e8f0;
+      color: #334155;
+    }
+
+    tr:nth-child(even) td {
+      background-color: #f8fafc;
+    }
+  }
+
+  // Custom statistical cards & badges
+  .stat-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.6em 0.8em;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    margin-bottom: 0.5em;
+
+    .stat-number {
+      font-size: 1.4em;
+      font-weight: 800;
+      color: #0284c7;
+      line-height: 1.1;
+    }
+
+    .stat-label {
+      font-size: 0.72em;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+      margin-top: 0.15em;
+    }
+
+    .stat-desc {
+      font-size: 0.7em;
+      color: #475569;
+      margin-top: 0.25em;
+    }
+  }
+
+  .ancestry-badge {
+    display: inline-block;
+    padding: 0.15em 0.45em;
+    font-size: 0.72em;
+    font-weight: 700;
+    border-radius: 4px;
+    margin-right: 0.3em;
+
+    &.eur { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+    &.eas { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+    &.afr { background: #fce7f3; color: #be185d; border: 1px solid #fbcfe8; }
+    &.sas { background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe; }
+    &.amr { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    &.mid { background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; }
+  }
+
+  .compact-slide {
+    font-size: 0.82em !important;
+
+    h2 {
+      font-size: 1.25em !important;
+      margin-bottom: 0.25em !important;
+    }
+
+    h3 {
+      font-size: 0.95em !important;
+      margin-top: 0.2em !important;
+    }
+
+    ul, ol {
+      margin-bottom: 0.35em !important;
+      li {
+        margin-bottom: 0.12em !important;
+      }
+    }
+
+    .stat-card {
+      padding: 0.4em 0.6em !important;
+      .stat-number { font-size: 1.2em !important; }
+      .stat-label { font-size: 0.68em !important; }
+      .stat-desc { font-size: 0.65em !important; }
+    }
+  }
+
+  // Mermaid diagrams styling
+  .reveal .cell-output-display .mermaid,
+  .reveal .mermaid {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0.5em auto;
+    text-align: center;
+
+    svg {
+      max-width: 100% !important;
+      max-height: 520px !important;
+      height: auto !important;
+      font-family: 'Inter', system-ui, sans-serif !important;
+    }
+  }
+}

@@ -1,0 +1,550 @@
+---
+title: "Cross-Ancestry Fine-Mapping of Locus 9p21.3"
+subtitle: "Linkage Disequilibrium and Allelic Heterogeneity Explain Population Variation in CAD Risk and Reduced Effect in Africans"
+author: "Hasan Alkhairo, Satoshi Koyama, Kruthika Iyer, ... Neil Risch, Catherine Tcheandjieu"
+institute: "Stanford University • Gladstone Institutes • UCSF • Million Veteran Program • H3Africa"
+date: "2026-08-06"
+format:
+  revealjs:
+    theme: [default, custom.scss]
+    slide-number: true
+    show-slide-number: all
+    transition: slide
+    overview: true
+    chalkboard: false
+    embed-resources: true
+    width: 1280
+    height: 720
+    margin: 0.08
+    controls: true
+    progress: true
+    history: true
+    center: false
+    pdf-separate-fragments: false
+    pdf-max-pages-per-slide: 1
+---
+
+# Overview & Orientation {background-color="#0f172a"}
+
+## Executive Summary {.compact-slide}
+
+::: {.columns}
+::: {.column width="58%"}
+### The 19-Year Genetic Paradox
+- **Landmark Discovery (2007)**: Locus **9p21.3** was the very first genome-wide significant locus identified for Coronary Artery Disease (CAD).
+- **Universal Non-African Replication**: Replicated robustly across European, East Asian, South Asian, Admixed American, and Middle Eastern cohorts.
+- **The Enigma in Africans**: Strikingly, the association has been **consistently non-replicable in African-ancestry individuals**, despite comparable minor allele frequencies (MAF) for lead tag SNPs.
+
+::: {.callout-note}
+### Research Question
+Does the lack of replication reflect true biological non-involvement, distinct causal variants (allelic heterogeneity), or fragmented linkage disequilibrium (LD) haplotypes?
+:::
+:::
+
+::: {.column width="42%"}
+<div class="stat-card">
+  <div class="stat-number">&gt; 650,000</div>
+  <div class="stat-label">Multi-Ancestry Participants</div>
+  <div class="stat-desc">Analyzed across MVP, UKBB, BBJ, H3Africa, and Saudi SHGP cohorts.</div>
+</div>
+
+<div class="stat-card">
+  <div class="stat-number">111 SNPs</div>
+  <div class="stat-label">Fine-Mapped Variants</div>
+  <div class="stat-desc">Dissected across the 21.9–22.17 Mb primary 9p21.3 risk core.</div>
+</div>
+
+<div class="stat-card">
+  <div class="stat-number">5 LAI Tiers</div>
+  <div class="stat-label">Local Ancestry Tiers</div>
+  <div class="stat-desc">Decomposed using Gnomix into continental chromosomal origins.</div>
+</div>
+:::
+:::
+
+## Table of Contents
+
+::: {.columns}
+::: {.column width="50%"}
+1. [The 9p21.3 Locus & The African Paradox](#the-9p21.3-paradox)
+2. [Cohorts & Methodological Innovations](#cohorts--methods)
+3. [Global vs. Local Ancestry Dissection](#global-vs-local-ancestry)
+4. [Allelic Heterogeneity & Stepwise Analysis](#allelic-heterogeneity)
+:::
+
+::: {.column width="50%"}
+5. [Haplotypes & Hamming Distance Analysis](#haplotypes--hamming-distance)
+6. [Phenome-Wide Pleiotropy & Lab Phenotypes](#phenome-wide-pleiotropy)
+7. [Molecular Biology (*ANRIL* / *CDKN2A/B*)](#molecular-mechanisms)
+8. [Clinical Implications & PRS Transferability](#clinical-implications)
+:::
+:::
+
+::: {.callout-tip}
+### Navigation Tip
+Press `O` on your keyboard at any point during this presentation to toggle Reveal.js slide overview mode.
+:::
+
+# The 9p21.3 Paradox {#the-9p21.3-paradox background-color="#0f172a"}
+
+## The Landmark 9p21.3 CAD Locus {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### Historical Context
+- Discovered in 2007 by three independent GWAS consortia (WTCCC, McPherson et al., Helgadottir et al.).
+- Located within a **gene desert** spanning ~100 kb on chromosome 9p21.3.
+- Nearest protein-coding genes:
+  - `CDKN2A` ($p16^{INK4a}$ / $p14^{ARF}$)
+  - `CDKN2B` ($p15^{INK4b}$)
+- Overlaps the long non-coding RNA **`ANRIL`** (`CDKN2B-AS1`).
+
+> "9p21.3 represents the strongest and most reproducible common-variant risk factor for premature myocardial infarction and coronary atherosclerosis in non-African populations."
+:::
+
+::: {.column width="50%"}
+### The Reproducibility Gap
+::: {.incremental}
+- **European Ancestry (EUR)**: Highly reproducible ($OR \approx 1.25$–$1.30$, $p < 10^{-100}$).
+- **East Asian Ancestry (EAS)**: Highly reproducible ($OR \approx 1.20$, $p < 10^{-20}$).
+- **Admixed American (AMR)**: Highly reproducible ($OR \approx 1.22$).
+- **Middle Eastern (MID)**: Highly reproducible ($OR \approx 1.26$).
+- **African Ancestry (AFR)**: **Null association ($OR \approx 1.00$, $p > 0.05$)**.
+:::
+
+::: {.callout-caution}
+### Why This Matters for Precision Medicine
+European-trained Polygenic Risk Scores (PRS) heavily weight 9p21.3, leading to marked miscalibration and diagnostic inequity in patients of African descent.
+:::
+:::
+:::
+
+## Central Hypotheses Addressed by Alkhairo et al. {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+::: {.callout-note}
+### 1. Power & Phenotypic Bias
+- **Hypothesis**: Non-replication in Africans is an artifact of sample size or clinical definition.
+- **Outcome**: ❌ **Refuted**. Evaluated in $>120,000$ African-ancestry participants across MVP and H3Africa whole genomes ($>99\%$ statistical power).
+:::
+
+::: {.callout-tip}
+### 2. Causal Allelic Heterogeneity
+- **Hypothesis**: Distinct causal variants drive CAD risk across different continental populations.
+- **Outcome**: ✅ **Confirmed**. Population-specific lead variants: `rs1333049` in Europeans vs. `rs4977574` in East Asians, with verified secondary signals.
+:::
+:::
+
+::: {.column width="50%"}
+::: {.callout-tip}
+### 3. Out-of-Africa LD Decay
+- **Hypothesis**: Shorter LD blocks in Africans uncouple lead tag SNPs from causal motifs.
+- **Outcome**: ✅ **Confirmed**. Rapid ancestral recombination in Africa breaks LD; European tag SNPs show $r^2 < 0.15$ with core causal enhancers.
+:::
+
+::: {.callout-tip}
+### 4. Cumulative Haplotype Requirement
+- **Hypothesis**: CAD risk requires co-inheritance of an extended multi-variant risk configuration.
+- **Outcome**: ✅ **Confirmed**. Risk scales monotonically with Hamming distance across 111 SNPs; African genomes carry fragmented, non-risk recombinant haplotypes.
+:::
+:::
+:::
+
+# Cohorts & Methods {#cohorts--methods background-color="#0f172a"}
+
+## Massive Multi-Ancestry Cohorts {.compact-slide}
+
+::: {.columns}
+::: {.column width="52%"}
+### Cohort Diversity & Discovery Scale
+- **VA Million Veteran Program (MVP)**:
+  - $N > 650,000$ racially and ethnically diverse veterans.
+  - Multi-ancestry representation: EUR ($n=445,436$), AFR ($n=120,447$), AMR ($n=54,809$), EAS ($n=8,150$).
+- **UK Biobank (UKBB)**:
+  - Deeply phenotyped European ($n=412,028$), South Asian ($n=9,752$), and African ($n=7,364$) participants.
+- **BioBank Japan (BBJ)**:
+  - $N = 178,000$ East Asian participants with CAD diagnosis.
+- **H3Africa Consortium**:
+  - Deep whole-genome sequencing (WGS) across diverse continental African ethnolinguistic groups.
+- **Saudi Human Genome Program (SHGP / KAIMRC)**:
+  - Middle Eastern indigenous Arabian cohort ($n = 12,500$).
+:::
+
+::: {.column width="48%"}
+### Ancestry Definition Strategy
+
+<span class="ancestry-badge eur">EUR</span> European Continental Ancestry  
+<span class="ancestry-badge eas">EAS</span> East Asian Ancestry  
+<span class="ancestry-badge afr">AFR</span> Continental & Diaspora African  
+<span class="ancestry-badge sas">SAS</span> South Asian Ancestry  
+<span class="ancestry-badge amr">AMR</span> Admixed American (Latino/Hispanic)  
+<span class="ancestry-badge mid">MID</span> Middle Eastern / Native Arab  
+
+::: {.callout-note}
+### Key Innovation
+Jointly evaluating **Global Ancestry (GIA)** and **Local Ancestry Inference (LAI)** to deconvolute ancestral chromosome segments within admixed genomes.
+:::
+:::
+:::
+
+## Methodological Innovations: GIA vs. LAI {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### Local Ancestry Inference via Gnomix
+- Admixed individuals inherit mosaic chromosomes reflecting distinct ancestral populations.
+- **Gnomix Machine Learning Framework**:
+  - Reference training panels: 1000 Genomes Project + HGDP ($n = 1,144$ non-admixed references).
+  - Decomposes chromosome 9 into five contiguous ancestral sub-intervals:
+    - Interval 1: `21,650,660 – 21,748,433 bp`
+    - Interval 2: `21,748,434 – 21,912,417 bp`
+    - Interval 3 (Core): `21,912,418 – 22,134,172 bp`
+    - Interval 4: `22,134,173 – 22,361,961 bp`
+    - Interval 5: `22,361,962 – 22,470,474 bp`
+- Classifies each participant's 9p21.3 diplotype:
+  - Homozygous: `AFR|AFR`, `EUR|EUR`, `NAT|NAT`
+  - Heterozygous: `AFR|EUR`, `AFR|non-AFR`
+:::
+
+::: {.column width="50%"}
+### Hamming Distance & Haplotype Modeling
+- **Haplotype Phasing**: High-confidence phasing via SHAPEIT4 and imputation.
+- **Hamming Distance Model**:
+  - Screened 111 fine-mapped CAD-significant SNPs ($\text{MAF} \ge 5\%$) across the 21.9–22.17 Mb core.
+  - Formulated a theoretical **all-protective baseline haplotype** carrying non-risk alleles ($\beta < 0$).
+  - For each individual, computed the Hamming distance ($H$):
+    $$H = \sum_{k=1}^{111} \mathbb{I}\left( \text{Allele}_k \ne \text{Protective}_k \right)$$
+  - Evaluated CAD odds as both a continuous variable and a 4-tier categorical factor ("few", "moderate", "many", "mostly risk").
+:::
+:::
+
+# Global vs. Local Ancestry {#global-vs-local-ancestry background-color="#0f172a"}
+
+## Global Ancestry Associations (Figure 1) {.compact-slide}
+
+::: {.columns}
+::: {.column width="58%"}
+![LocusZoom across Global Ancestry Groups](https://www.cell.com/cms/10.1016/j.ajhg.2026.06.007/asset/a3895b52-978d-4dcb-bf72-c6d7089637ed/main.assets/gr1.jpg){width=100%}
+:::
+
+::: {.column width="42%"}
+### Striking Cross-Population Disparity
+- **European (EUR)**: Massive peak centered on `rs1333049` ($p = 2.4 \times 10^{-143}$).
+- **East Asian (EAS)**: Strong peak centered on `rs4977574` ($p = 2.2 \times 10^{-23}$).
+- **Admixed American (AMR)**: Broad significant signal ($p = 8.7 \times 10^{-35}$).
+- **Middle Eastern (MID)**: Significant signal ($p = 3.6 \times 10^{-11}$).
+- **South Asian (SAS)**: Nominal association ($p < 0.01$).
+- **African (AFR)**: **Completely flat** across all common variants ($p > 0.05$).
+
+::: {.callout-important}
+### Allele Frequencies Are Not the Driver
+The risk alleles exist at substantial frequencies in Africans ($\text{MAF} = 0.20$–$0.45$), yet show **zero association** with CAD in global African analyses.
+:::
+:::
+:::
+
+## Local Ancestry Dissection in MVP (Figure 2) {.compact-slide}
+
+::: {.columns}
+::: {.column width="58%"}
+![LocusZoom stratified by Local Ancestry Diplotypes in MVP](https://www.cell.com/cms/10.1016/j.ajhg.2026.06.007/asset/9061554d-7955-4ce5-972f-c4fe80dfe4a6/main.assets/gr2_lrg.jpg){width=100%}
+:::
+
+::: {.column width="42%"}
+### Uncoupling Genetics from Demographics
+- In African Americans of global African ancestry:
+  - **`AFR|EUR` Heterozygotes**: Harboring one European-derived 9p21.3 chromosome segment restores the **full CAD risk signal** ($p = 5.1 \times 10^{-14}$).
+  - **`AFR|AFR` Homozygotes**: Entirely **null association** ($p = 0.62$).
+
+::: {.callout-tip}
+### Decisive Conclusion
+The absence of CAD association in Africans is **not** caused by lifestyle, healthcare access, systemic discrimination, or unmeasured environmental confounders. It is strictly intrinsic to the **haplotype structure of the chromosome itself**.
+:::
+:::
+:::
+
+## Evolutionary Divergence & Out-of-Africa LD Decay {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### Progressive Linkage Disequilibrium Decay
+- Serial founder bottlenecks during human migration out of Africa produced long, intact LD blocks in non-African populations.
+- Strength and span of 9p21.3 LD blocks strictly mirrors human evolutionary history:
+  $$\text{AFR (shortest)} \ll \text{MID} < \text{SAS} < \text{EAS} < \text{EUR (longest)}$$
+- In continental Africans, tens of thousands of generations of ancestral recombination have fragmented the 9p21.3 locus into ultra-short LD segments.
+:::
+
+::: {.column width="50%"}
+### Hudson $F_{ST}$ Differentiation
+- Hudson $F_{ST}$ metric across the 21.9–22.17 Mb core reveals profound population differentiation:
+  - **MVP AFR vs. MVP NAT homozygotes**: $F_{ST} = 0.278$ (highest divergence).
+  - **UKBB European vs. Western African**: $F_{ST} = 0.204$.
+  - **UKBB European vs. Southern African**: $F_{ST} = 0.196$.
+  - **Eastern African**: Systematically closer to non-Africans ($F_{ST} \approx 0.12$), attributable to historical West Eurasian / Arabian gene flow.
+
+::: {.callout-note}
+### Selective Sweep Signals
+Cross-population XP-EHH and iHS statistics confirm positive selection signatures in Eurasian populations at 9p21.3 that are absent in Sub-Saharan Africa.
+:::
+:::
+:::
+
+# Allelic Heterogeneity {#allelic-heterogeneity background-color="#0f172a"}
+
+## Stepwise Conditional Analysis (Figure 3) {.compact-slide}
+
+::: {.columns}
+::: {.column width="58%"}
+![Stepwise Conditional Analysis in EUR and EAS](https://www.cell.com/cms/10.1016/j.ajhg.2026.06.007/asset/d52b7533-bffd-47ac-bf40-1912a9574a43/main.assets/gr3.jpg){width=100%}
+:::
+
+::: {.column width="42%"}
+### Unmasking Distinct Causal Variants
+- **European Analysis**:
+  - Baseline lead: `rs1333049` ($p = 2.4 \times 10^{-143}$).
+  - Conditioning on `rs1333049` leaves a distinct secondary signal at `rs10811656` ($p = 3.8 \times 10^{-8}$).
+- **East Asian Analysis**:
+  - Baseline lead: `rs4977574` ($p = 2.2 \times 10^{-23}$).
+  - Conditioning on `rs4977574` reveals persistent secondary association at `rs1333049`.
+
+::: {.callout-important}
+### Allelic Heterogeneity Confirmed
+Multiple distinct, partially independent causal variants reside on 9p21.3. Different populations capture distinct subsets of these variants due to divergent LD tagging.
+:::
+:::
+:::
+
+## Fine-Mapping Across Global Cohorts {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### Top Tag Variants Across Cohorts
+| Variant ID | Position (hg38) | Alleles | Lead In | Functional Annotation |
+|:---|:---:|:---:|:---:|:---|
+| **rs1333049** | chr9:22,115,105 | C / G | EUR | *ANRIL* Intron 2 enhancer |
+| **rs4977574** | chr9:22,115,078 | A / G | EAS | Core regulatory motif |
+| **rs10811656** | chr9:22,087,604 | T / C | EUR (Cond) | Non-coding regulatory |
+| **rs10757278** | chr9:22,114,726 | A / G | AMR / MID | *ANRIL* splice regulator |
+| **rs2891168** | chr9:22,118,102 | A / G | EAS / SAS | Enhancer / TF binding |
+:::
+
+::: {.column width="50%"}
+### Why Lead SNPs Fail in Africans
+::: {.incremental}
+- In Europeans, `rs1333049` has high LD ($r^2 > 0.85$) with dozens of co-inherited regulatory mutations.
+- In Africans, $r^2$ between `rs1333049` and surrounding putative causal variants drops below **$0.15$**.
+- Therefore, testing `rs1333049` alone in an African cohort tests an **isolated SNP decoupled from the multi-site causal apparatus**.
+:::
+:::
+:::
+
+# Haplotypes & Hamming Distance {#haplotypes--hamming-distance background-color="#0f172a"}
+
+## Core 6-SNP Haplotype Architecture {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### The 6-SNP Haplotype Definition
+- Following Tcheandjieu et al. (2022), evaluated 6 canonical tag SNPs across the primary 9p21.3 locus:
+  - `rs10757274` - `rs10757278` - `rs1333049` - `rs4977574` - `rs2891168` - `rs1333045`
+- Two predominant ancestral haplotypes in non-Africans:
+  - **`AACATT`**: The ancestral **protective / non-risk** haplotype.
+  - **`GGTTCA`**: The modern **high-risk** haplotype ($OR = 1.34$, $p < 10^{-80}$).
+:::
+
+::: {.column width="50%"}
+### Continental Distribution Disparity
+- **Non-African Populations**:
+  - `AACATT` frequency: $45\%$–$55\%$
+  - `GGTTCA` frequency: $35\%$–$45\%$
+- **African Populations (MVP AFR & H3Africa)**:
+  - `GGTTCA` is **virtually absent** ($< 0.1\%$).
+  - `AACATT` is **virtually absent** ($< 0.5\%$).
+  - Africans carry **over 35 alternative recombinant haplotypes** (e.g., `AGTTCA`, `AATACA`, `GGTACT`, `AGCTCT`), none of which carry the complete risk configuration.
+:::
+:::
+
+::: {.callout-note}
+### Exception Proves the Rule
+In Eastern African cohorts (Ethiopia, Kenya), low frequencies of `GGTTCA` ($5.6\%$) and `AACATT` ($1.7\%$) appear, directly tracking Middle Eastern admixture.
+:::
+
+## Hamming Distance Analysis (Figure 4) {.compact-slide}
+
+::: {.columns}
+::: {.column width="58%"}
+![Hamming Distance vs. CAD Risk Across Cohorts](https://www.cell.com/cms/10.1016/j.ajhg.2026.06.007/asset/f247ced8-71e1-425a-845a-553fc619af6f/main.assets/gr4.jpg){width=100%}
+:::
+
+::: {.column width="42%"}
+### Monotonic Dose-Response
+- Evaluated Hamming distance from an all-protective baseline across **111 fine-mapped SNPs**.
+- **In Non-African Cohorts**:
+  - Clear, linear increase in CAD odds with increasing Hamming distance.
+  - Individuals categorized as carrying "mostly risk alleles" exhibit an $OR > 1.65$ compared to those with "few risk alleles".
+- **In African Cohorts**:
+  - Distance distribution is shifted and fragmented across thousands of unique combinations.
+  - Absence of full-length risk haplotypes blunts the observed effect size.
+:::
+:::
+
+# Phenome-Wide Pleiotropy {#phenome-wide-pleiotropy background-color="#0f172a"}
+
+## Cross-Trait PheWAS Dissection (Figure 5) {.compact-slide}
+
+::: {.columns}
+::: {.column width="58%"}
+![Phenome-Wide Association Across Local Ancestry Tiers](https://www.cell.com/cms/10.1016/j.ajhg.2026.06.007/asset/b936f4e5-d613-4b72-8f43-ff0c911a5b5a/main.assets/gr5.jpg){width=100%}
+:::
+
+::: {.column width="42%"}
+### Broad Pleiotropy vs. Decoupled Sub-Phenotypes
+- **European Homozygotes (`EUR|EUR`) & Heterozygotes (`AFR|EUR`)**:
+  - Massive pleiotropy across circulatory and metabolic phenotypes:
+    - Coronary Atherosclerosis & Angina ($p < 10^{-120}$)
+    - Peripheral Vascular Disease (PVD)
+    - Abdominal Aortic Aneurysm (AAA)
+    - Type 2 Diabetes (T2D) & Fasting Glucose
+- **African Homozygotes (`AFR|AFR`)**:
+  - Complete disappearance of CAD, PVD, and AAA signals.
+  - Glycemic traits (HbA1c, glucose) drop below significance.
+  - **Crucially: Monocyte and platelet count associations persist!**
+:::
+:::
+
+## Biological Interpretation of PheWAS Decoupling {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### Decoupled Regulatory Modules
+- In European chromosomes, large LD blocks physically link:
+  1. Vascular smooth muscle proliferation enhancers.
+  2. Endothelial cell senescence elements.
+  3. Hematopoietic / platelet-monocyte transcriptional enhancers.
+- In African chromosomes, ancient recombination separated these functional units:
+  - The **hematopoietic element** remains active and associated with platelet/monocyte traits.
+  - The **vascular/atherosclerosis enhancer module** is broken apart, eliminating CAD risk.
+:::
+
+::: {.column width="50%"}
+### Pleiotropic Trait Comparison
+
+| Phenotype Class | `EUR|EUR` | `AFR|EUR` | `AFR|AFR` |
+|:---|:---:|:---:|:---:|
+| **Coronary Artery Disease** | High Risk ($p < 10^{-100}$) | High Risk ($p < 10^{-14}$) | **Null ($p > 0.5$)** |
+| **Abdominal Aortic Aneurysm** | Significant | Significant | **Null** |
+| **Type 2 Diabetes / HbA1c** | Significant | Significant | **Null** |
+| **Platelet & Monocyte Counts** | Significant | Significant | **Significant ($p < 10^{-4}$)** |
+
+::: {.callout-tip}
+### Functional Implication
+Proves that 9p21.3 is not a single uniform locus, but a **multi-enhancer regulatory cluster** controlling distinct biological pathways.
+:::
+:::
+:::
+
+# Molecular Mechanisms {#molecular-mechanisms background-color="#0f172a"}
+
+## The *ANRIL* / *CDKN2A* / *CDKN2B* Regulatory Axis {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### Molecular Circuitry
+- **`ANRIL` (CDKN2B-AS1)**: A long non-coding RNA transcribed in antisense orientation to *CDKN2B*.
+- Exists as both **linear isoforms** and **circular RNA (circANRIL)**:
+  - **Linear ANRIL**: Recruits Polycomb repressive complexes (PRC1 & PRC2) to epigenetically silence *CDKN2A* ($p16^{INK4a}$, $p14^{ARF}$) and *CDKN2B* ($p15^{INK4b}$).
+  - Downregulation of $p15/p16$ promotes excessive vascular smooth muscle cell (VSMC) proliferation and inhibits physiological apoptosis.
+  - **Circular ANRIL (circANRIL)**: Promotes nucleolar stress and p53 activation, inducing atheroprotective atheroma stability.
+:::
+
+::: {.column width="50%"}
+### Haplotype-Driven Transcriptional Modulation
+- The 9p21.3 risk haplotype alters splicing enhancers within *ANRIL*:
+  - Increases pathological linear *ANRIL* expression.
+  - Decreases protective circular *circANRIL* expression.
+  - Results in excessive cellular proliferation, arterial wall remodeling, and impaired endothelial repair.
+
+::: {.callout-important}
+### Multi-Enhancer Synergism
+The risk haplotype requires multiple cooperating transcription factor binding sites (STAT1, TEAD, C/EBPβ). In Africans, recombination uncouples these enhancers, preventing the pathological transcriptional shift.
+:::
+:::
+:::
+
+# Clinical Implications {#clinical-implications background-color="#0f172a"}
+
+## Polygenic Risk Score (PRS) Transferability & Equity {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### The PRS Failure in Diverse Populations
+- CAD Polygenic Risk Scores (e.g., PRS313, GPS) are primarily derived from European GWAS summary statistics.
+- Because 9p21.3 has the largest effect size of any common locus, it contributes **disproportionately to individual PRS percentiles**.
+- When applied to individuals of African ancestry:
+  - African individuals carrying European tag alleles receive **falsely inflated risk scores** without actual elevated risk.
+  - Conversely, true African-specific risk variants elsewhere in the genome are unmeasured.
+:::
+
+::: {.column width="50%"}
+### Proposed Solutions from Alkhairo et al.
+::: {.incremental}
+1. **Local-Ancestry Informed PRS (LAI-PRS)**:
+   - Weight 9p21.3 variants only when present on European, East Asian, or Admixed American local ancestry backgrounds.
+2. **Haplotype-Based Imputation**:
+   - Score full multi-SNP risk configurations (e.g., `GGTTCA` or Hamming distance) rather than single tag SNPs.
+3. **Multi-Ancestry Biobank Expansion**:
+   - Prioritize fine-mapping in diverse global biobanks (MVP, H3Africa, All of Us).
+:::
+
+::: {.callout-tip}
+### Health Equity Imperative
+Addressing LD architecture differences is essential to prevent genomic medicine from exacerbating existing cardiovascular healthcare disparities.
+:::
+:::
+:::
+
+# Conclusions & Synthesis {background-color="#0f172a"}
+
+## Summary of Key Discoveries {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### Resolving the 9p21.3 Mystery
+1. **The African Disparity is Real**: Not attributable to power, clinical ascertainment, or allele frequency differences.
+2. **Local Ancestry Rescues Signal**: In African Americans, European chromosomes at 9p21.3 restore full CAD risk; African chromosomes show zero risk.
+3. **Allelic Heterogeneity**: European (`rs1333049`) and East Asian (`rs4977574`) associations are driven by distinct, partially independent signals.
+4. **Haplotype Fragmentation**: The 111-SNP risk haplotype and the 6-SNP `GGTTCA` risk block are absent in Africans due to ancestral recombination.
+:::
+
+::: {.column width="50%"}
+### Methodological Blueprint
+5. **Decoupled Biology**: PheWAS proves vascular atherosclerosis risk and hematologic (platelet/monocyte) regulatory elements can be functionally separated.
+6. **Clinical Urgency**: Single-SNP PRSs misestimate CAD risk in admixed and African patients; local ancestry deconvolution is mandatory.
+
+::: {.callout-note}
+### Final Thought
+"Understanding why loci fail to replicate across populations is as informative as discovering them. Ancestry-stratified and haplotype-resolved genetics are crucial to deciphering the causal architecture of complex human disease."
+:::
+:::
+:::
+
+## References & Data Availability {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### Primary Literature
+- **Alkhairo et al. (2026)**. *Linkage disequilibrium and allelic heterogeneity explain variation in coronary artery disease risk at 9p21 across populations and reduced effect in Africans*. **Am. J. Hum. Genet.**, 113(11), 1630–1645. [doi:10.1016/j.ajhg.2026.06.007](https://doi.org/10.1016/j.ajhg.2026.06.007)
+- **Tcheandjieu et al. (2022)**. *Large-scale genome-wide association study of coronary artery disease in diverse populations*. **Nat. Med.**, 28, 1679–1692.
+- **Helgadottir et al. (2007)**; **McPherson et al. (2007)**; **WTCCC (2007)**. Discovery of 9p21.3 CAD locus.
+:::
+
+::: {.column width="50%"}
+### Data & Code Resources
+- **Summary Statistics**: Deposited in the GWAS Catalog and dbGaP.
+- **Local Ancestry Pipeline**: Gnomix v1.0 reference panel workflows.
+- **Haplotype Software**: `haplo.stats` and PLINK2.
+- **Million Veteran Program (MVP)**: Research access via VA ORD.
+- **H3Africa Genomic Data**: EGA repository under consortium data governance.
+:::
+:::
