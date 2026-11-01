@@ -1,9 +1,16 @@
 # LD9p21
 
-Linkage Disequilibrium paper on 9p21
+Quarto Summary of Linkage Disequilibrium paper on 9p21
 
 Alkhairo H, Koyama S, Iyer K et al. (2026). Linkage disequilibrium and allelic heterogeneity explain variation in coronary artery disease risk at 9p21 across populations and reduced effect in Africans. The American Journal of Human Genetics, 113(11), 1630-1645.
 <https://doi.org/10.1016/j.ajhg.2026.06.007>
+
+See quarto source in
+[quarto/ld9p21_cross_ancestry.qmd](quarto/ld9p21_cross_ancestry.qmd).
+This can be rendered with
+`quarto render quarto/ld9p21_cross_ancestry.qmd`
+provided you have
+[Quarto](https://quarto.org/) installed and available as `quarto` in your PATH.
 
 ## Figures
 
