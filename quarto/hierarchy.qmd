@@ -1,0 +1,587 @@
+---
+title: "Hierarchical Statistics in Isolated Cardiomyocyte Studies"
+subtitle: "Correcting Pervasive Clustering Artifacts and False-Positive Discoveries in Calcium Signaling and Heart Failure"
+author: "Markus B. Sikkel, Darrel P. Francis, Kenneth T. MacLeod, et al."
+institute: "Imperial College London • Cardiovascular Research 2017 • Extended Analysis with Brian S. Yandell"
+date: "2026-11-11"
+format:
+  revealjs:
+    theme: [default, custom.scss]
+    slide-number: true
+    show-slide-number: all
+    transition: slide
+    overview: true
+    chalkboard: false
+    embed-resources: true
+    width: 1280
+    height: 720
+    margin: 0.08
+    controls: true
+    progress: true
+    history: true
+    center: false
+    pdf-separate-fragments: false
+    pdf-max-pages-per-slide: 1
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  dev = "png",
+  dpi = 300
+)
+suppressPackageStartupMessages({
+  library(ggplot2)
+  library(nlme)
+})
+
+# Load the empirical dataset created from cvx151.pdf
+data_file <- if (file.exists("data/cvx151.RDS")) {
+  "data/cvx151.RDS"
+} else if (file.exists("data/cvx151.rds")) {
+  "data/cvx151.rds"
+} else {
+  "../data/cvx151.RDS"
+}
+cvx_data <- readRDS(data_file)
+```
+
+# Overview & Orientation {background-color="#0f172a"}
+
+## Executive Summary {.compact-slide}
+
+::: {.columns}
+::: {.column width="58%"}
+### The 30-Year Cardiomyocyte Paradox
+- **The Central Paradigm**: Post-myocardial infarction heart failure (HF) alters sarcoplasmic reticulum (SR) Ca2+ handling and excitation-contraction coupling.
+- **The Controversy**: Over 18 published studies report **contradictory findings** for virtually every Ca2+ kinetic parameter (some report increases, others report decreases, others find no change).
+- **The Real Cause**: It is **not** biological model differences. It is **statistical disaggregation**—treating cells or sparks from the same heart as independent data points ($N \times m$).
+
+::: {.callout-note}
+### Core Finding (Sikkel et al., 2017)
+"Ca2+ fluxes in isolated cardiomyocytes show severe clustering (ICC up to 58%). Standard statistical tests underestimate standard errors, resulting in a **150% overstatement** of statistically significant changes."
+:::
+:::
+
+::: {.column width="42%"}
+<div class="stat-card">
+  <div class="stat-number">150%</div>
+  <div class="stat-label">Overstatement of Significance</div>
+  <div class="stat-desc">Standard naive t-tests identified 5 of 10 comparisons as significant; hierarchical models showed only 2 were real.</div>
+</div>
+
+<div class="stat-card">
+  <div class="stat-number">58%</div>
+  <div class="stat-label">Peak Intraclass Correlation</div>
+  <div class="stat-desc">Observed in Ca2+ spark amplitude (LogAmp), demonstrating extreme clustering at cell and animal levels.</div>
+</div>
+
+<div class="stat-card">
+  <div class="stat-number">200 &rarr; 19</div>
+  <div class="stat-label">Effective Sample Size ($N_{\text{eff}}$)</div>
+  <div class="stat-desc">With 10 rats and 20 cells each ($\text{ICC} = 0.5$), the effective biological sample size collapses from 200 to only 19.</div>
+</div>
+:::
+:::
+
+## Table of Contents
+
+::: {.columns}
+::: {.column width="50%"}
+1. [The Heart Failure Controversy & Table 1](#hf-controversy)
+2. [Hierarchical Structure of Myocyte Studies](#myocyte-hierarchy)
+3. [Clustering, ICC & Effective Sample Size](#icc-framework)
+4. [Two-Level Hierarchy: Ca2+ Transients](#transients-analysis)
+:::
+
+::: {.column width="50%"}
+5. [Three-Level Hierarchy: Ca2+ Sparks](#sparks-analysis)
+6. [Aggregation vs. Disaggregation vs. LMM](#analytical-approaches)
+7. [The Open-Source R Toolkit & Workflows](#r-toolkit)
+8. [Synthesis & Laboratory Guidelines](#synthesis-guidelines)
+:::
+:::
+
+::: {.callout-tip}
+### Presentation Navigation
+Press `O` on your keyboard at any point during this presentation to toggle Reveal.js slide overview mode. Press `F` to enter full-screen mode.
+:::
+
+# The Heart Failure Controversy {#hf-controversy background-color="#0f172a"}
+
+## Conflicting Literature in Post-MI Heart Failure {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### The Left Anterior Descending (LAD) Model
+- The standard rat coronary artery ligation model has been used for over 50 years to study ischemic cardiomyopathy (Johns & Olson, 1954).
+- **Whole-Organ Level**: Remarkable consistency across laboratories (ejection fraction drops from ~83% to ~40%, heart weight:body weight ratio increases by ~25%).
+- **Cellular & Subcellular Level**: **Complete discordance**.
+  - Does Ca2+ transient amplitude increase or decrease?
+  - Does transient decay slow down or accelerate?
+  - Does SR Ca2+ content deplete or overload?
+:::
+
+::: {.column width="50%"}
+### The Flawed "Biological" Explanations
+
+Before Sikkel et al., researchers proposed ad-hoc biological rationales:
+
+::: {.incremental}
+1. *"Compensated vs. De-compensated Phases"*: Refuted by timeline meta-analysis (no temporal trend from 3 to 18 weeks post-MI).
+2. *"Myofilament Desensitization Overriding Ca2+"*: Invoked when contractile dysfunction was found alongside enhanced transients.
+3. *"Model & Species Artifacts"*: Refuted because conflicting directions exist within the exact same rat LAD ligation protocol!
+:::
+
+::: {.callout-important}
+### The Unexamined Culprit
+The statistical methods treated technical cell replicates as independent observations, generating false significance out of random noise.
+:::
+:::
+:::
+
+## Literature Meta-Analysis: Table 1 Summary {.compact-slide}
+
+Summary of reported changes in electrically evoked Ca2+ transients across 18 landmark rat post-MI studies:
+
+| Parameter | Increased ($\uparrow$) | Unchanged ($\leftrightarrow$) | Decreased ($\downarrow$) | Total Studies | Consensus Status |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **Transient Amplitude** | 5 | 5 | 3 | 13 | ❌ **Direct Conflict** |
+| **Transient Decay Time** | 11 | 6 | 0 | 17 | ⚠️ Broad Conflict |
+| **SR Ca2+ Content** | 1 | 3 | 1 | 5 | ❌ **Opposite Directions** |
+| **Diastolic [Ca2+]i** | 4 | 4 | 0 | 8 | ⚠️ 50/50 Split |
+
+::: {.callout-caution}
+### The Cost of Statistical Disaggregation
+When standard statistical tests are applied to clustered data, spurious statistical significance is generated in arbitrary directions depending on which specific animal's cells dominated that day's preparation.
+:::
+
+# Hierarchical Structure of Myocyte Studies {#myocyte-hierarchy background-color="#0f172a"}
+
+## Anatomy of the Experimental Hierarchy (Figure 1) {.compact-slide}
+
+::: {.columns}
+::: {.column width="55%"}
+![Figure 1: Hierarchical structure of data from isolated cardiomyocyte studies](https://cdn.ncbi.nlm.nih.gov/pmc/blobs/de7c/5852514/ade49ab4620f/cvx151f1.jpg){width=100%}
+:::
+
+::: {.column width="45%"}
+### Multi-Level Nesting Architecture
+- **Multiple Cells per Isolation**: Multiple cardiomyocytes originate from each heart isolation.
+- **Within-Heart Correlation**: Differences between animals and slight daily variations in isolation quality mean measurements in **Cell A** are more similar to **Cell B** (same heart) than to **Cell C** (different heart).
+- **Subcellular Sparks**: Individual sparks recorded within a cell exhibit an additional third level of hierarchy.
+
+::: {.callout-note}
+### The Independence Violation
+A fundamental condition of common statistical tests (e.g. $t$-tests and ANOVA)—**independence of observations**—is therefore contravened.
+:::
+:::
+:::
+
+## Why Do Cardiomyocytes Cluster Within Hearts? {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### Biological & Isolation Batch Effects
+In cardiac cellular physiology, cells isolated on the same day from the same heart share:
+- **Enzymatic Digestion Kinetics**: Batch variations in collagenase, protease activity, perfusion pressure, and digestion time.
+- **Dye Loading & Temperature**: Exact micro-variations in Fura-2AM / Fluo-4AM de-esterification and bath temperature ($37^\circ\text{C}$).
+- **Hemodynamic Milieu**: Animal-specific neurohormonal tone, infarct size, and systemic adrenergic drive.
+:::
+
+::: {.column width="50%"}
+### Subcellular Stochasticity in Sparks
+- Ca2+ sparks arise from stochastic openings of ryanodine receptor (RyR) clusters.
+- Because spark morphology varies within a cell, investigators assumed individual sparks could be treated as independent data points!
+- Sikkel et al. demonstrate that **sparks show profound clustering at the cell level** ($\text{ICC} = 58\%$).
+- Local t-tubule architecture and sarcoplasmic reticulum Ca2+ load create cell-specific spark microenvironments.
+:::
+:::
+
+# Clustering, ICC & Effective Sample Size {#icc-framework background-color="#0f172a"}
+
+## Quantifying Clustering: The Intraclass Correlation (Figure 2) {.compact-slide}
+
+::: {.columns}
+::: {.column width="52%"}
+![Figure 2: Intraclass correlation in cardiomyocyte studies](https://cdn.ncbi.nlm.nih.gov/pmc/blobs/de7c/5852514/6ce0a5998b71/cvx151f2.jpg){width=100%}
+:::
+
+::: {.column width="48%"}
+### Clustering Magnitude & Correction
+The Intraclass Correlation Coefficient ($\text{ICC}$) quantifies the proportion of total variance attributable to the heart/isolation:
+
+$$\text{ICC} = \frac{\sigma^2_{\text{rat}}}{\sigma^2_{\text{rat}} + \sigma^2_{\text{cell}}}$$
+
+- **Top Panel (High ICC $\approx 90\%$)**: Cells cluster tightly in each heart. Large correction required.
+- **Middle Panel (Intermediate ICC $\approx 50\%$)**: Moderate clustering.
+- **Bottom Panel (Low ICC $\approx 10\%$)**: High proportion of total variability coming from each individual heart.
+
+::: {.callout-important}
+### Standard Error Deflation
+$$\text{SE}_{\text{hierarchical}} = \text{SE}_{\text{naive}} \times \sqrt{1 + (m - 1)\times \text{ICC}}$$
+:::
+:::
+:::
+
+## Sikkel's Effective Sample Size Equation {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### The Formulation
+For an experiment with $n$ animals and $m$ cells per animal:
+
+$$N_{\text{eff}} = \frac{n \times m}{1 + (m - 1) \times \text{ICC}}$$
+
+- **Limiting Case 1 ($\text{ICC} \to 0$)**: $N_{\text{eff}} \to n \times m$ (all cells independent).
+- **Limiting Case 2 ($\text{ICC} \to 1$)**: $N_{\text{eff}} \to n$ (cells redundant).
+
+### The Worked Example (Sikkel et al.)
+- Consider $n = 10$ animals, $m = 20$ cells each ($n \times m = 200$).
+- If $\text{ICC} = 50\%$ ($0.50$):
+  $$N_{\text{eff}} = \frac{200}{1 + (19 \times 0.5)} = \frac{200}{1 + 9.5} = \frac{200}{10.5} \approx \mathbf{19.0}$$
+:::
+
+::: {.column width="50%"}
+### Power Calculations Must Use $N_{\text{eff}}$
+```{r}
+#| label: neff-table
+m_cells <- c(5, 10, 20, 50)
+iccs <- c(0.10, 0.25, 0.50, 0.75)
+n_rats <- 10
+
+neff_df <- outer(m_cells, iccs, function(m, r) {
+  round((n_rats * m) / (1 + (m - 1) * r), 1)
+})
+colnames(neff_df) <- paste0("ICC = ", iccs * 100, "%")
+rownames(neff_df) <- paste0("m = ", m_cells, " cells (Total ", n_rats * m_cells, ")")
+knitr::kable(neff_df, caption = "Effective Sample Size (N_eff) for 10 Rats")
+```
+
+::: {.callout-caution}
+### Critical Rule for Study Design
+Standard power calculators assume independent observations. If your target sample size is 19 animals, collecting 200 cells from 10 animals only achieves $N_{\text{eff}} = 19$.
+:::
+:::
+:::
+
+# Two-Level Hierarchy: Ca2+ Transients {#transients-analysis background-color="#0f172a"}
+
+## Ca2+ Transient Morphology: Table 2 Results {.compact-slide}
+
+::: {.columns}
+::: {.column width="55%"}
+### Empirical Analysis (76 Control vs. 79 HF Cells)
+```{r}
+#| label: table2-display
+t2 <- cvx_data$table2_transients
+t2_disp <- t2[, c("variable", "icc_pct", "common_p", "hier_p", "p_superior_fit")]
+colnames(t2_disp) <- c("Morphological Variable", "ICC (%)", "Common p", "Hierarchical p", "Superior Fit")
+knitr::kable(t2_disp, align = c("l", "c", "c", "c", "c"))
+```
+
+::: {.callout-important}
+### P-value Reversal in Time to 50% Peak
+- Common t-test: $p = 0.018$ (statistically significant prolongation!).
+- Hierarchical test: $p = 0.109$ (non-significant!).
+- The apparent kinetic prolongation was completely spurious.
+:::
+:::
+
+::: {.column width="45%"}
+### Mechanistic Takeaways
+
+::: {.incremental}
+1. **Significant Clustering Everywhere**: ICC ranged from $12\%$ to $47\%$. For every variable, hierarchical modeling fit significantly better ($p < 0.05$).
+2. **Standard Errors Were Artificially Deflated**: For tau of decay, hierarchical $\text{SE} = 17.7$ vs. common $\text{SE} = 8.55$ (a 2-fold deflation!).
+3. **The Only Real Difference**: Transient amplitude is significantly higher in HF ($p = 0.010$), driven entirely by peak systolic ratio ($p = 0.046$).
+:::
+:::
+:::
+
+## The "Goldilocks" Confidence Interval (Figure 3) {.compact-slide}
+
+::: {.columns}
+::: {.column width="52%"}
+![Figure 3: Correction for clustering produced by hierarchical tests](https://cdn.ncbi.nlm.nih.gov/pmc/blobs/de7c/5852514/e97781b6cbc8/cvx151f3.jpg){width=100%}
+:::
+
+::: {.column width="48%"}
+### The "Goldilocks" Confidence Interval
+- **Disaggregated CI** ($n \times m$ independent data points):
+  $$\text{CI} = \pm 1.96 \times \frac{\sigma}{\sqrt{n \times m}} \quad \text{(Erroneously Narrow)}$$
+- **Aggregated CI** ($m$ rat averages as data points):
+  $$\text{CI} = \pm 1.96 \times \frac{\sigma}{\sqrt{m}} \quad \text{(Erroneously Wide)}$$
+- **Hierarchical Technique**:
+  Calculates the SEM based on the exact degree of clustering ($\text{ICC}$), giving the true, unbiased **"Goldilocks" confidence interval**.
+:::
+:::
+
+## Ca2+ Transient Clustering & CI Correction (Figure 4) {.compact-slide}
+
+::: {.columns}
+::: {.column width="52%"}
+![Figure 4: Clustering of time to 50% peak transient amplitude](https://cdn.ncbi.nlm.nih.gov/pmc/blobs/de7c/5852514/aa5872a539f0/cvx151f4.jpg){width=100%}
+:::
+
+::: {.column width="48%"}
+### Clustered Transients in Heart Failure
+- **Panel A (Clustering by Rat)**: Time to 50% peak for each cell (grey dots) across 10 control and 10 HF rats. Data are visibly clustered within hearts ($\text{ICC} = 12\%$).
+- **Panel B (95% CI Comparison)**: 
+  - **Common Test (Red)**: Artificially narrow CI excludes zero ($p = 0.018$).
+  - **Hierarchical Test (Green)**: Corrected CI spans zero ($p = 0.109$).
+
+::: {.callout-tip}
+### Resolution of Literature Conflict
+Failing to account for rat-level clustering created the false appearance that Ca2+ transients are delayed in HF.
+:::
+:::
+:::
+
+# Three-Level Hierarchy: Ca2+ Sparks {#sparks-analysis background-color="#0f172a"}
+
+## Three-Level Spark Architecture: Table 3 Results {.compact-slide}
+
+::: {.columns}
+::: {.column width="55%"}
+### 696 Sparks Across 39 Cells from 12 Rats
+```{r}
+#| label: table3-display
+t3 <- cvx_data$table3_sparks
+t3_disp <- t3[, c("variable", "icc_pct", "hierarchy_level", "common_p", "hier_p")]
+colnames(t3_disp) <- c("Spark Variable", "ICC (%)", "Best Model", "Common p", "Hierarchical p")
+knitr::kable(t3_disp, align = c("l", "c", "c", "c", "c"))
+```
+
+::: {.callout-danger}
+### Catastrophic Overstatement Exposed
+The common test claimed **LogAmp was highly significant ($p < 0.001$)** and **LogFDHM was significant ($p = 0.023$)**. 
+Under the 3-level hierarchical model, **neither is significant ($p = 0.239$ and $p = 0.778$)**!
+:::
+:::
+
+::: {.column width="45%"}
+### Why Spark Hierarchies Matter
+- Sparks are nested inside **cells**, which are nested inside **rats**.
+- **LogAmp**: Exhibits an astonishing **$\text{ICC} = 58\%$** clustering. 
+  - Standard error under naive test: $0.0090$.
+  - Standard error under 3-level model: $0.0641$ (**a 7-fold increase!**).
+- **Result**: Not a single spark morphology parameter is significantly altered in HF!
+:::
+:::
+
+## Multi-Level Clustering of Ca2+ Sparks (Figure 5) {.compact-slide}
+
+::: {.columns}
+::: {.column width="52%"}
+![Figure 5: Multi-level clustering of spark logAmp](https://cdn.ncbi.nlm.nih.gov/pmc/blobs/de7c/5852514/8bbda5b765c4/cvx151f5.jpg){width=100%}
+:::
+
+::: {.column width="48%"}
+### Multi-Tiered Spark Architecture
+- **Panel A (Cell-Level Clustering)**: Sparks from 5 cells of a single rat heart show marked cellular clustering.
+- **Panel B (Rat-Level Clustering)**: Sparks further cluster across individual rats.
+- **Panel C (95% CI Comparison)**:
+  - **Common Test (Red)**: With 2 levels of uncorrected clustering ($\text{ICC} = 58\%$), difference appears highly significant ($p < 0.001$).
+  - **3-Level Hierarchical (Green)**: Standard error widens 7-fold; CI properly spans zero ($p = 0.239$).
+
+::: {.callout-important}
+### True Spark Reality
+None of the spark variables (amplitude, width, duration, frequency) differ between HF and control. Standard methods manufactured illusory significance.
+:::
+:::
+:::
+
+# Aggregation vs. Disaggregation {#analytical-approaches background-color="#0f172a"}
+
+## The Flaws of Crude Alternatives {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### 1. Disaggregation (Splitting)
+- Treat all $n \times m$ points as independent.
+- **The Fatal Flaw**: Falsely small SE, falsely small confidence intervals, falsely small p-values.
+- **Isolation Bias**: Overweights "good isolation days" where many cells were easily harvested from 1 or 2 animals.
+
+::: {.callout-danger}
+### The 150% Error Rate
+In Sikkel et al.'s dataset, disaggregation claimed 5 of 10 comparisons were significant, when only 2 were real.
+:::
+:::
+
+::: {.column width="50%"}
+### 2. Aggregation (Lumping)
+- Average all data points from an animal into a single mean.
+- **The Fatal Flaw**: Excessively conservative; collapses 696 sparks into just 12 numbers.
+- **Isolation Bias**: Overweights "bad isolation days" by giving equal weight to 1 or 2 sickly cells as to 50 healthy cells!
+
+::: {.callout-tip}
+### The Hierarchical Mixed Model Solution
+Weights each animal's contribution by its precision, preserves all individual data points, and guarantees honest type I error control.
+:::
+:::
+:::
+
+## Method Comparison Matrix {.compact-slide}
+
+| Feature | Disaggregation (Common Practice) | Aggregation (Animal Means) | Hierarchical Linear Mixed Models |
+| :--- | :---: | :---: | :---: |
+| **Data Unit** | Pooled cells or sparks | Animal averages | All observations + cluster IDs |
+| **False-Positive Risk** | **Severe (150% overstatement) ❌** | Controlled (Nominal 5%) ✅ | **Controlled (Nominal 5%) ✅** |
+| **Statistical Power** | Spurious / Invalid | Low (excessively conservative) | **Optimal (Maximum valid power) ✅** |
+| **"Good vs Bad Days"** | Biased toward good days | Biased toward bad days | **Unbiased (Precision-weighted) ✅** |
+| **Handles 3-Level Data?** | No | Destroys data structure | **Yes (Rat + Cell + Spark) ✅** |
+| **Software Accessibility** | Ubiquitous (Excel, basic t-tests) | Easy (Average in Excel $\to$ t-test) | **Freely available in R (`lmerTest`, `nlme`)** |
+
+::: {.callout-note}
+### Key Takeaway
+Hierarchical modeling is not merely a "p-value penalty." It is a structural framework that matches the physical reality of the biological laboratory.
+:::
+
+# The Open-Source R Toolkit {#r-toolkit background-color="#0f172a"}
+
+## Sikkel et al.'s Free Open-Source Solution {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### Two-Level Hierarchy (`ratonly.Rmd`)
+For Ca2+ transients or slice contractility with rat-level clustering:
+
+```r
+library(lmerTest)
+
+# Fit linear mixed-effects model
+fit_transient <- lmer(
+  time_to_peak ~ condition + (1 | rat_id), 
+  data = transient_data
+)
+
+# Extract Satterthwaite-corrected ANOVA table
+anova(fit_transient)
+
+# Pairwise differences with honest standard errors
+difflsmeans(fit_transient)
+```
+:::
+
+::: {.column width="50%"}
+### Three-Level Hierarchy (`ratandcell.Rmd`)
+For Ca2+ sparks with both cell- and rat-level clustering:
+
+```r
+library(lmerTest)
+
+# Fit three-level nested model
+fit_spark <- lmer(
+  log_amp ~ condition + (1 | rat_id) + (1 | cell_id), 
+  data = spark_data
+)
+
+# Test whether 3-level model improves fit over 2-level
+fit_spark_2level <- lmer(
+  log_amp ~ condition + (1 | rat_id), 
+  data = spark_data
+)
+anova(fit_spark_2level, fit_spark) # Likelihood Ratio Test
+```
+:::
+:::
+
+## Visualizing Clustering in R {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### R Code for SuperPlots
+```r
+library(ggplot2)
+
+ggplot(spark_df, aes(x = condition, y = log_amp, color = rat_id)) +
+  # 1. Jitter individual sparks as semi-transparent dots
+  geom_point(position = position_jitter(width = 0.2), 
+             alpha = 0.4, size = 1.5) +
+  # 2. Overlay animal summary diamonds
+  stat_summary(fun = mean, geom = "point", shape = 23, 
+               size = 4, fill = "black", color = "white") +
+  # 3. Superimpose condition mean and animal-level SE
+  stat_summary(fun.data = mean_se, geom = "errorbar", 
+               width = 0.2, linewidth = 1.2, color = "black") +
+  theme_minimal(base_size = 14)
+```
+:::
+
+::: {.column width="50%"}
+### Four Output Tables from R Scripts
+The scripts provided by Sikkel et al. generate four automated tables:
+1. **Model Comparison Table**: Common vs. Hierarchical $p$-values, $\text{ICC}$, and $\chi^2_{-2\text{LL}}$ test for superior fit.
+2. **Point Estimates Table**: Estimated marginal means with corrected $95\%$ confidence intervals.
+3. **Pairwise Differences Table**: Pairwise contrast tests with Satterthwaite degrees of freedom.
+4. **Variance Components Table**: Variance partitioned between rat, cell, and residual.
+:::
+:::
+
+# Synthesis & Laboratory Guidelines {#synthesis-guidelines background-color="#0f172a"}
+
+## 5 Practical Rules for Isolated Cell Studies {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+::: {.callout-note}
+### 1. Test for Clustering First
+Never assume cellular data are independent. Always calculate the Intraclass Correlation Coefficient ($\text{ICC}$) and perform a $\chi^2_{-2\text{LL}}$ likelihood ratio test.
+:::
+
+::: {.callout-tip}
+### 2. Base Power Calculations on $N_{\text{eff}}$
+Do not use raw cell counts ($n \times m$) in power calculations. Multiply your target animal count by $(1 + (m - 1)\text{ICC})$ to find the true required sample size.
+:::
+
+::: {.callout-important}
+### 3. Transparent Multi-Level Reporting
+State in all figure legends: *"Data represent $k = 696$ sparks across $m = 39$ cells from $n = 12$ rats. Analyzed via 3-level hierarchical mixed models."*
+:::
+:::
+
+::: {.column width="50%"}
+::: {.callout-caution}
+### 4. Resist Binary P-Value Fetishism
+Focus on effect sizes and honest $95\%$ confidence intervals. Recognize that standard $t$-tests produce artificially narrow intervals that create illusory significance.
+:::
+
+::: {.callout-tip}
+### 5. Adopt Cost-Free Tools
+Use R (`lmerTest`, `nlme`) or GraphPad Prism's Nested ANOVA tools. Do not let lack of specialized software justify disaggregation.
+:::
+:::
+:::
+
+## References & Data Availability {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### Primary Literature
+- **Sikkel, M.B., Francis, D.P., Howard, J., et al. (2017)**. *Hierarchical statistical techniques are necessary to draw reliable conclusions from analysis of isolated cardiomyocyte studies*. **Cardiovascular Research**, 113(14): 1743–1752. [doi:10.1093/cvr/cvx151](https://doi.org/10.1093/cvr/cvx151)
+- **Eisner, D.A. (2021)**. *Pseudoreplication in physiology: More means less*. **J. Gen. Physiol.**, 153(2): e202012826.
+- **Hurlbert, S.H. (1984)**. *Pseudoreplication and the design of ecological field experiments*. **Ecol. Monogr.**, 54(2): 187–211.
+- **Lazic, S.E. (2010)**. *The problem of pseudoreplication in neuroscientific studies*. **BMC Neurosci.**, 11: 5.
+:::
+
+::: {.column width="50%"}
+### Repository Data & Reproducibility
+- **Dataset Asset**: [data/cvx151.RDS](data/cvx151.RDS)
+  - Contains `table2_transients` (Morphology comparisons).
+  - Contains `table3_sparks` (3-level spark hierarchy).
+  - Contains `transient_df` (155 cells across 20 rats).
+  - Contains `spark_df` (696 sparks across 39 cells from 12 rats).
+- **Presentation Source**: [quarto/hierarchy.qmd](quarto/hierarchy.qmd)
+- **Render Command**:
+  ```bash
+  quarto render quarto/hierarchy.qmd
+  ```
+- **Live Output**: Self-contained Reveal.js presentation with embedded graphics and full slide overview matrix.
+:::
+:::

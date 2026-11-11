@@ -1,0 +1,765 @@
+---
+title: "Pseudoreplication in Physiology: More Means Less"
+subtitle: "Hierarchical Statistics, Nested Designs, and the False-Positive Paradox in Cellular and Islet Studies"
+author: "David A. Eisner (Tutorial Review) • Extended Analysis with Brian S. Yandell"
+institute: "University of Manchester • University of Wisconsin–Madison"
+date: "2026-11-11"
+format:
+  revealjs:
+    theme: [default, custom.scss]
+    slide-number: true
+    show-slide-number: all
+    transition: slide
+    overview: true
+    chalkboard: false
+    embed-resources: true
+    width: 1280
+    height: 720
+    margin: 0.08
+    controls: true
+    progress: true
+    history: true
+    center: false
+    pdf-separate-fragments: false
+    pdf-max-pages-per-slide: 1
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  dev = "png",
+  dpi = 300
+)
+suppressPackageStartupMessages({
+  library(ggplot2)
+  library(nlme)
+})
+
+# Load the empirical dataset created from the tutorial simulations and islet models
+data_file <- if (file.exists("data/psuedoreplication.RDS")) {
+  "data/psuedoreplication.RDS"
+} else if (file.exists("data/pseudoreplication.rds")) {
+  "data/pseudoreplication.rds"
+} else {
+  "../data/psuedoreplication.RDS"
+}
+sim_data <- readRDS(data_file)
+```
+
+# Overview & Orientation {background-color="#0f172a"}
+
+## Executive Summary {.compact-slide}
+
+::: {.columns}
+::: {.column width="58%"}
+### The Reproducibility Paradox in Physiology
+- **Common Experimental Paradigm**: Cell physiology experiments routinely compare two or more groups (e.g., wild-type vs. transgenic, control vs. heart failure, diabetic vs. healthy).
+- **The Pervasive Pitfall**: Multiple cells are isolated from a modest number of animals, and statistical tests (t-tests or ANOVA) are performed treating **each cell as an independent sample** ($N \times n$).
+- **The "More Means Less" Paradox**: Naively measuring more cells per animal actually **inflates the false-positive rate** (up to 47% or higher under the null hypothesis!).
+
+::: {.callout-note}
+### Core Insight (Eisner 2021)
+"Treating cells from the same animal as independent biological replicates violates the fundamental independence assumption of standard parametric tests, producing spurious statistical significance out of thin air."
+:::
+:::
+
+::: {.column width="42%"}
+<div class="stat-card">
+  <div class="stat-number">47%</div>
+  <div class="stat-label">Peak False-Positive Rate</div>
+  <div class="stat-desc">Observed in simulations under the null hypothesis when cell variance is small relative to animal variance.</div>
+</div>
+
+<div class="stat-card">
+  <div class="stat-number">N &times; n &rarr; N</div>
+  <div class="stat-label">Effective Sample Size Collapse</div>
+  <div class="stat-desc">As intraclass correlation (ICC) approaches 1.0, effective biological sample size collapses to animal count $N$.</div>
+</div>
+
+<div class="stat-card">
+  <div class="stat-number">1984</div>
+  <div class="stat-label">Hurlbert's Landmark Definition</div>
+  <div class="stat-desc">Stuart Hurlbert defined pseudoreplication as using inferential statistics to test for treatment effects with replicates that are not independent.</div>
+</div>
+:::
+:::
+
+## Table of Contents
+
+::: {.columns}
+::: {.column width="50%"}
+1. [The Pseudoreplication Crisis & Independence](#the-crisis)
+2. [Variance Sources & The ICC Framework](#icc-framework)
+3. [Empirical Simulation: "More Means Less"](#simulation-insights)
+4. [Four Critical Nuances & Complex Hierarchies](#four-nuances)
+:::
+
+::: {.column width="50%"}
+5. [Statistical Solutions: Averaging vs. Mixed Models](#statistical-solutions)
+6. [Case Study: Mouse Islet Cell Hierarchies](#islet-case-study)
+7. [Implementation in R & SuperPlots](#r-workflow)
+8. [Synthesis & Laboratory Guidelines](#synthesis-guidelines)
+:::
+:::
+
+::: {.callout-tip}
+### Interactive Slide Navigation
+Press `O` on your keyboard at any point during this presentation to toggle Reveal.js slide overview matrix. Press `F` to enter full-screen mode.
+:::
+
+# The Pseudoreplication Crisis {#the-crisis background-color="#0f172a"}
+
+## What is Pseudoreplication? {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### The Formal Definition
+- Coined by **Stuart Hurlbert (1984)** in ecological field experiments:
+  > *"The use of inferential statistics to test for treatment effects with data from replicates that are not statistically independent."*
+- In laboratory physiology and biomedicine:
+  - **Biological Unit ($N$)**: The animal, patient, or independent biological preparation.
+  - **Technical Replicate ($n$)**: Multiple cells, tissue slices, wells, patches, or organelle traces sampled from that same biological unit.
+- **The Core Violation**: A standard Student's t-test or ANOVA assumes all observations are independent and identically distributed ($\text{i.i.d.}$).
+:::
+
+::: {.column width="50%"}
+### The Limiting Case ($N = 1, n = 100$)
+- Imagine testing whether blood pressure differs between residents of London and New York.
+- **Flawed Protocol**: Pick **one** Londoner and measure her blood pressure 100 times; pick **one** New Yorker and measure his blood pressure 100 times.
+- With $n = 100$, standard error is:
+  $$\text{SE} = \frac{\text{SD}}{\sqrt{100}} = 0.1 \times \text{SD}$$
+- Even a trivial difference between the two individuals produces $p < 0.0001$!
+- **Error**: The test compares *these two specific individuals*, not the two cities!
+
+::: {.callout-caution}
+### The Physiology Parallel
+Studying 3 animals with 10 cells each ($N \times n = 30$) is conceptually identical: it tests differences between the isolations, not the biological conditions.
+:::
+:::
+:::
+
+## Ubiquity Across Experimental Physiology {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### Pervasive in High-Impact Literature
+Studies across top cardiovascular, neuroscience, and endocrinology journals frequently pool sub-samples:
+- **Cardiomyocyte Physiology**:
+  - Measuring action potentials or Ca2+ transients from 5–20 myocytes per heart.
+  - Recording hundreds of Ca2+ sparks per single myocyte (Sikkel et al., 2017).
+- **Neuroscience & Slice Electrophysiology**:
+  - Recording synaptic potentials from multiple neurons or dendritic spines per brain slice (Lazic, 2010).
+- **Islet Biology & Diabetes**:
+  - Assaying insulin secretion from multiple islets isolated per mouse (Attie & Yandell, 2026).
+- **Cell Culture & Molecular Biology**:
+  - Treating multiple wells or coverslips from the same cell line passage as independent (Lazic et al., 2018).
+:::
+
+::: {.column width="50%"}
+### Why Do Researchers Do It?
+::: {.incremental}
+1. **Cost & Animal Welfare (3Rs)**: Animals are expensive, ethically constrained, and labor-intensive to house and treat.
+2. **Technical Yield**: Once an animal is sacrificed and cells isolated, collecting 10–20 cells from that prep takes marginal extra effort.
+3. **Naïve Statistical Intuition**: Researchers mistakenly believe that "larger sample size ($N \times n$) always increases precision and reduces error."
+4. **Software Defaults**: Standard spreadsheet and plotting software default to flat column t-tests without warning about nested structures.
+:::
+
+::: {.callout-important}
+### The Consequence
+A vast proportion of published physiological differences between wild-type and transgenic animals are likely **irreproducible false positives**.
+:::
+:::
+:::
+
+# Variance Sources & The ICC Framework {#icc-framework background-color="#0f172a"}
+
+## Partitioning Two Sources of Variation {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### Biological vs. Measurement Variation
+In any hierarchical physiological experiment, total observed variance ($\sigma^2_{\text{total}}$) decomposes into two independent components:
+
+$$\sigma^2_{\text{total}} = \sigma^2_{\text{animal}} + \sigma^2_{\text{cell}}$$
+
+1. **Between-Animal Variance ($\sigma^2_{\text{animal}}$, $\text{SD}_{\text{animal}}$)**:
+   - Genuine inter-individual biological differences (genetics, epigenetic state, age, physiological baseline).
+   - Day-to-day experimental batch effects (temperature, perfusion solutions, enzymatic digestion quality, isolation stress).
+2. **Within-Animal / Intra-Cell Variance ($\sigma^2_{\text{cell}}$, $\text{SD}_{\text{cell}}$)**:
+   - Technical measurement noise (instrument precision, electrode seal, optical focus).
+   - Intrinsic cellular heterogeneity within the same organ.
+:::
+
+::: {.column width="50%"}
+### The Limiting Extreme ($\text{SD}_{\text{cell}} = 0$)
+- Consider the thought experiment where $\text{SD}_{\text{cell}} = 0$.
+- All 5 cells isolated from Animal 1 yield the exact same value.
+- The 15 cell data points in each group are merely **5 identical clones of 3 distinct biological numbers**!
+- Any standard t-test on $N \times n = 15$ drastically underestimates true standard error:
+  $$\text{SE}_{\text{naive}} = \frac{\text{SD}}{\sqrt{15}} \quad \text{vs.} \quad \text{SE}_{\text{true}} = \frac{\text{SD}}{\sqrt{3}}$$
+- The t-statistic is artificially inflated by $\sqrt{5} \approx 2.24$-fold, causing massive false rejection of the null hypothesis!
+:::
+:::
+
+## The Intraclass Correlation Coefficient (ICC) {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### Mathematical Formulation
+The Intraclass Correlation Coefficient ($\text{ICC}$ or $\rho$) quantifies the proportion of total variance attributable to clustering within animals:
+
+$$\text{ICC} = \frac{\sigma^2_{\text{animal}}}{\sigma^2_{\text{animal}} + \sigma^2_{\text{cell}}}$$
+
+- **Range**: $0.0 \le \text{ICC} \le 1.0$.
+- **$\text{ICC} \to 1.0$ (High Clustering)**:
+  - $\sigma^2_{\text{cell}}$ is very small compared to $\sigma^2_{\text{animal}}$.
+  - Cells from the same animal are nearly identical.
+  - Extra cells from the same animal provide **zero additional biological information**.
+- **$\text{ICC} \to 0.0$ (No Clustering)**:
+  - $\sigma^2_{\text{animal}}$ is negligible; variation is dominated by within-cell noise.
+  - Cells behave as truly independent samples.
+:::
+
+::: {.column width="50%"}
+### Effective Sample Size ($N_{\text{eff}}$)
+Sikkel et al. (2017) and Eisner (2021) formulate the effective sample size for $N$ animals with $n$ cells each:
+
+$$N_{\text{eff}} = \frac{N \times n}{1 + (n - 1) \times \text{ICC}}$$
+
+```{r}
+# Display a dynamic lookup table of N_eff
+n_cells_grid <- c(1, 2, 5, 10, 20, 50)
+icc_vals <- c(0.1, 0.3, 0.5, 0.8, 1.0)
+N_anim <- 3
+
+neff_mat <- outer(n_cells_grid, icc_vals, function(n, r) {
+  round((N_anim * n) / (1 + (n - 1) * r), 1)
+})
+colnames(neff_mat) <- paste0("ICC=", icc_vals)
+rownames(neff_mat) <- paste0("n=", n_cells_grid, " cells")
+knitr::kable(neff_mat, caption = "Effective Sample Size (N_eff) for N = 3 Animals")
+```
+
+::: {.callout-note}
+### Key Takeaway
+Even with $n = 50$ cells per animal, if $\text{ICC} = 0.5$, your effective sample size is only $5.9$ (not $150$!). When $\text{ICC} = 1.0$, $N_{\text{eff}} \equiv 3.0$.
+:::
+:::
+:::
+
+# Empirical Simulation: "More Means Less" {#simulation-insights background-color="#0f172a"}
+
+## Eisner Figure 1: 3 Animals, 5 Cells per Animal {.compact-slide}
+
+::: {.columns}
+::: {.column width="52%"}
+![Figure 1: Simulation of the effects of comparing 15 cells drawn from 3 animals](https://cdn.ncbi.nlm.nih.gov/pmc/blobs/7594/7814346/d08a6b63a20a/JGP_202012826_Fig1.jpg){width=100%}
+:::
+
+::: {.column width="48%"}
+### The Dangers of Disaggregation
+- **Setup**: Two groups drawn from **identical populations** (Null hypothesis is true: $\Delta \mu = 0$, mean = 1.0; $\text{SD}_{\text{animal}} = 0.3$, $\text{SD}_{\text{cell}} = 0.3$).
+- **Panel A ($N = 3$ Animals)**: $t$-test shows no significant difference ($p = 0.15$).
+- **Panel B (15 Cells Pooled)**: Naive $t$-test on pooled cells shows highly significant difference ($p = 0.0007$!).
+
+| Statistical Test | Sample Basis | $df$ | $p$-value | Conclusion |
+| :--- | :--- | :---: | :---: | :--- |
+| **Animal Means** | $N = 3$ / group | $4$ | $0.15$ | Non-significant ✅ |
+| **Hierarchical LME** | Random Intercept | $4$ | $0.13$ | Non-significant ✅ |
+| **Naive Pooled Test** | $N \times n = 15$ | $28$ | $0.0007$ | **Spurious Positive ❌** |
+
+::: {.callout-caution}
+### The 29% False Discovery Rate
+Across repeated trials with $\text{SD}_{\text{animal}} = \text{SD}_{\text{cell}} = 0.3$, the naive test yields $p < 0.05$ in **29% of simulations** under the true null!
+:::
+:::
+:::
+
+## Eisner Figure 2: Impact of Animal and Cell SD {.compact-slide}
+
+::: {.columns}
+::: {.column width="52%"}
+![Figure 2: Effects of animal and cell SD on apparent significance](https://cdn.ncbi.nlm.nih.gov/pmc/blobs/7594/7814346/032c8e97a0c0/JGP_202012826_Fig2.jpg){width=100%}
+:::
+
+::: {.column width="48%"}
+### Impact of Variance Components
+- **Panel A (Effects of $\text{SD}_{\text{cell}}$)**:
+  - Fixed $\text{SD}_{\text{animal}} = 0.3$.
+  - Lower $\text{SD}_{\text{cell}}$ ($0.05$, left) tightens cell clusters, yielding $p = 0.001$ ($47\%$ average false positives).
+  - Higher $\text{SD}_{\text{cell}}$ ($0.45$, right) widens spread, yielding $p = 0.207$ ($21\%$ false positives).
+- **Panel B (Effects of $\text{SD}_{\text{animal}}$)**:
+  - Fixed $\text{SD}_{\text{cell}} = 0.3$.
+  - Increasing $\text{SD}_{\text{animal}}$ from $0.05$ (left, $p = 0.35$) to $0.45$ (right, $p = 0.002$) escalates false positives from $6\%$ to $37\%$.
+
+::: {.callout-important}
+### The Counterintuitive Lesson
+Having "cleaner, tighter measurements" with lower technical noise **increases** the false-positive rate if analyzed naively!
+:::
+:::
+:::
+
+## Eisner Figure 3: Cell Count vs. Animal Count {.compact-slide}
+
+::: {.columns}
+::: {.column width="52%"}
+![Figure 3: Dependence of apparent significance on SD and sample numbers](https://cdn.ncbi.nlm.nih.gov/pmc/blobs/7594/7814346/4f208818e241/JGP_202012826_Fig3.jpg){width=100%}
+:::
+
+::: {.column width="48%"}
+### 200,000-Trial Parameter Sweeps
+- **Panel A (2D Parameter Sweep)**:
+  - $\text{SD}_{\text{cell}}$ and $\text{SD}_{\text{animal}}$ varied from $0$ to $0.5$ in steps of $0.025$ ($200,000$ trials/condition).
+  - **Point A** (low animal SD, high cell SD): nominal $\approx 5\%$.
+  - **Point B** (high animal SD, low cell SD): $\mathbf{45\%}$ false positives.
+  - **Points C & D** (equal SDs): $\approx \mathbf{35\%}$ false positives.
+- **Panel B (Animals vs. Cells)**:
+  - Number of animals ($x$-axis) has **almost no effect** on reducing error.
+  - Number of cells per animal ($y$-axis) monotonically **escalates false positives** ($>10\%$ at $n=2$, $>40\%$ at $n=8$).
+
+::: {.callout-danger}
+### The Takeaway
+Studying more than one cell per animal and assuming cells are independent dramatically inflates false discoveries. More means less.
+:::
+:::
+:::
+
+# Four Critical Nuances {#four-nuances background-color="#0f172a"}
+
+## Four Essential Distinctions (Eisner 2021) {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### 1. When Cell-Level $n$ IS Valid
+- It is entirely valid to use cells as $n$ **when you are not comparing between animals**.
+- *Example*: Perfusing an ion channel blocker acutely onto isolated myocytes to measure dose-response kinetics.
+- Here, the biological hypothesis pertains to biophysical channel properties across cells, with no between-animal treatment factor.
+
+### 2. Multi-Level Sub-Cellular Nesting
+- Often researchers take multiple measurements *within each cell*:
+  - Diameters of cellular organelles (mitochondria, granules).
+  - Ca2+ sparks recorded in cardiomyocytes (hundreds of sparks per cell!).
+- Treating 500 sparks from 3 cells as $N = 1,500$ produces catastrophic pseudoreplication.
+:::
+
+::: {.column width="50%"}
+### 3. In Vitro Tissue Culture Artifacts
+- Cultured cells in dishes or multi-well plates suffer identical clustering:
+  - Wells treated with siRNA vs scrambled control.
+  - All wells from one flask share passage number, media batch, and incubator position.
+  - Treating 6 wells per plate as independent biological replicates is pseudoreplication (Lazic et al., 2018).
+
+### 4. Biological Heterogeneity vs Noise
+- Cellular variation within an animal is not always measurement error; it often reflects **real physiological heterogeneity** (e.g., beta-cell metabolic subtypes).
+- Hierarchical models allow researchers to model and test changes in **intra-animal dispersion**, rather than discarding it.
+:::
+:::
+
+## Multi-Tiered Experimental Hierarchies {.compact-slide}
+
+::: {.columns}
+::: {.column width="55%"}
+<div style="display: flex; flex-direction: column; gap: 8px; margin-top: 5px;">
+  <div style="background: #0f172a; color: white; padding: 10px 14px; border-radius: 8px; border-left: 5px solid #38bdf8; font-weight: bold; font-size: 0.82em;">
+    Tier 1: Experimental Condition / Group (Fixed Treatment Factor)
+    <div style="font-size: 0.8em; font-weight: normal; color: #94a3b8; margin-top: 3px;">
+      e.g., Wild-Type vs. Transgenic | Control vs. Heart Failure | Drug vs. Vehicle
+    </div>
+  </div>
+  
+  <div style="margin-left: 20px; background: #e0f2fe; color: #0369a1; padding: 10px 14px; border-radius: 8px; border-left: 5px solid #0284c7; font-weight: bold; font-size: 0.82em;">
+    Tier 2: Animal / Biological Subject (True Experimental Unit: N)
+    <div style="font-size: 0.8em; font-weight: normal; color: #0369a1; margin-top: 3px;">
+      Random intercept cluster: \(u_j \sim \mathcal{N}(0, \sigma^2_{\text{animal}})\) • True degrees of freedom (\(N - 2\))
+    </div>
+  </div>
+  
+  <div style="margin-left: 40px; background: #fef3c7; color: #b45309; padding: 10px 14px; border-radius: 8px; border-left: 5px solid #d97706; font-weight: bold; font-size: 0.82em;">
+    Tier 3: Isolated Cell / Islet / Tissue Slice (Technical Replicate: n)
+    <div style="font-size: 0.8em; font-weight: normal; color: #92400e; margin-top: 3px;">
+      Residual cell variation: \(\epsilon_{jk} \sim \mathcal{N}(0, \sigma^2_{\text{cell}})\) • Provides NO independent biological df
+    </div>
+  </div>
+  
+  <div style="margin-left: 60px; background: #f1f5f9; color: #475569; padding: 10px 14px; border-radius: 8px; border-left: 5px solid #64748b; font-weight: bold; font-size: 0.82em;">
+    Tier 4: Subcellular Trace / Organelle (Measurement Replicate: k)
+    <div style="font-size: 0.8em; font-weight: normal; color: #64748b; margin-top: 3px;">
+      Hundreds of Ca2+ sparks / mitochondria per cell • Extreme pseudoreplication if pooled
+    </div>
+  </div>
+</div>
+:::
+
+::: {.column width="45%"}
+### The Principle of Error Strata
+- **Where Treatment Acts**: Experimental conditions are assigned to the **animal** (Tier 2).
+- **The Appropriate Error Term**: Hypotheses testing between-group differences must test against variation among **animals**, not subunits nested within them.
+- **The Disaggregation Trap**: Pooling Tier 3 or 4 subunits multiplies apparent sample size by $n$ or $k$, producing artificially deflated standard errors and spuriously tiny $p$-values.
+
+::: {.callout-tip}
+### The Golden Rule of Degrees of Freedom
+Hypotheses comparing **Groups** must be tested against the variance of the units assigned to those groups (**Animals**), never against the variance of subunits nested within them (**Cells**).
+:::
+:::
+:::
+
+# Statistical Solutions {#statistical-solutions background-color="#0f172a"}
+
+## Solution 1: Animal Averaging (Summary Statistics) {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### The Simple "Conservative" Approach
+- For each animal $i$, compute the arithmetic mean of all its technical replicates:
+  $$\bar{y}_i = \frac{1}{n_i} \sum_{j=1}^{n_i} y_{ij}$$
+- Perform a standard Student's two-sample t-test or one-way ANOVA on the $N$ animal means.
+- **Degrees of Freedom**: $\text{df} = N_{\text{total}} - 2$ (e.g., $3 + 3 - 2 = 4$).
+
+::: {.callout-tip}
+### The Key Virtue
+It completely eliminates pseudoreplication! Under the null hypothesis, the Type I error rate is **guaranteed to be exactly the nominal 5.0%**.
+:::
+:::
+
+::: {.column width="50%"}
+### Disadvantages & Limitations
+::: {.incremental}
+1. **Discards Valuable Information**: Strips away intra-animal variance and information on cell-to-cell heterogeneity.
+2. **Suboptimal for Unbalanced Designs**:
+   - If Animal 1 provided 2 cells and Animal 2 provided 40 cells, simple averaging treats both means as having equal precision.
+   - An animal with 2 noisy cells is given the exact same statistical weight as an animal with 40 precise cells!
+3. **Loss of Statistical Power**: In unbalanced designs, unweighted averaging reduces statistical power compared to optimal shrinkage estimators.
+:::
+
+::: {.callout-note}
+### Verdict (Sikkel et al. 2017)
+Animal averaging is safe and valid, but mathematically suboptimal when cell counts vary between animals.
+:::
+:::
+:::
+
+## Solution 2: Linear Mixed-Effects Models (LMM) {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### The Gold Standard Method
+Hierarchical linear mixed-effects modeling specifies both fixed treatment effects and random biological clusters:
+
+$$y_{ijk} = \mu + \text{Treatment}_i + u_{j(i)} + \epsilon_{ijk}$$
+
+- **$y_{ijk}$**: Measurement for cell $k$ from animal $j$ in group $i$.
+- **$\text{Treatment}_i$**: Fixed effect of experimental condition.
+- **$u_{j(i)} \sim \mathcal{N}(0, \sigma^2_{\text{animal}})$**: Random intercept for animal $j$.
+- **$\epsilon_{ijk} \sim \mathcal{N}(0, \sigma^2_{\text{cell}})$**: Residual intra-animal error.
+
+::: {.callout-tip}
+### Why LMM is Superior
+- Uses **all individual cell measurements**.
+- Automatically weights each animal by its precision (effective sample size).
+- Completely controls Type I error at nominal 5%.
+:::
+:::
+
+::: {.column width="50%"}
+### Shrinkage & Partial Pooling
+- In unbalanced datasets, mixed models apply **empirical Bayes shrinkage**:
+  - Animal means based on few cells are shrunk toward the overall group mean.
+  - Animal means based on many cells remain close to their sample mean.
+- **Software Implementation**:
+  - **R**: `nlme::lme()`, `lme4::lmer()`.
+  - **GraphPad Prism**: "Nested t-test" or "Nested one-way ANOVA" (since Prism v8).
+  - **Python**: `statsmodels.formula.api.mixedlm()`.
+  - **Julia / Stan**: `MixedModels.jl` or Bayesian hierarchical Stan models.
+:::
+:::
+
+## Direct Comparison of the Three Approaches {.compact-slide}
+
+| Analytical Feature | Naive Pooled t-test / ANOVA | Animal Averaging (Summary Means) | Hierarchical Linear Mixed Model (LMM) |
+| :--- | :---: | :---: | :---: |
+| **Data Input Unit** | All individual cells pooled | Mean per animal | All individual cells + Animal ID |
+| **Nominal Type I Error ($\alpha = 0.05$)** | **Grossly Inflated (10%–75%) ❌** | **Exact 5.0% ✅** | **Exact 5.0% ✅** |
+| **Statistical Power** | Artificially high (spurious) | Valid, but suboptimal if unbalanced | **Optimal (Maximum statistical power) ✅** |
+| **Handles Unbalanced Cell Counts?** | No (biases result toward prolific animals) | No (treats $n=2$ same as $n=50$) | **Yes (precision-weighted shrinkage) ✅** |
+| **Models Cellular Heterogeneity?** | No | No (discards variance) | **Yes ($\sigma^2_{\text{cell}}$ explicitly estimated) ✅** |
+| **Degrees of Freedom Formulation** | $N \times n - 2$ (severely inflated) | $N - 2$ (honest) | Satterthwaite / Kenward-Roger ($N - 2$) |
+| **Ease of Execution** | Trivial (Spreadsheet / Basic t-test) | Very Easy (`t.test` on averages) | Moderate (`nlme::lme` or Prism Nested) |
+
+::: {.callout-note}
+### Synthesis
+When cell numbers per animal are perfectly equal (balanced design), Animal Averaging and Hierarchical LMM give **identical p-values**. When unbalanced, LMM is mathematically superior.
+:::
+
+# Case Study: Mouse Islet Cell Hierarchies {#islet-case-study background-color="#0f172a"}
+
+## Alan Attie & Brian Yandell's Islet Discussion {.compact-slide}
+
+::: {.columns}
+::: {.column width="52%"}
+### The Laboratory Inquiry (Alan Attie)
+> *"We routinely do islet experiments with multiple islet samples from mice. We do the conservative approach of averaging the technical replicates and then doing t-tests or ANOVA with n = number of mice. I wonder if we should be using a hierarchical analysis. What do you think? Can you show me how to do it?"*
+> — **Alan** (citing Sikkel et al., 2017)
+
+### Statistical Guidance (Brian Yandell)
+> *"Hierarchical analysis gives exactly the same result if nesting is balanced (same number of islets per animal). If not balanced, a weighted analysis would be equivalent. The nesting idea is that islet cells are nested within individuals..."*
+:::
+
+::: {.column width="48%"}
+### Brian Yandell's Classical ANOVA Table
+For $N$ animals and $c$ islets/cells per animal across 2 groups:
+
+$$\begin{array}{lcc}
+\hline
+\textbf{Source of Variation} & \textbf{Levels} & \textbf{Degrees of Freedom (df)} \\
+\hline
+\text{Group (Treatment)} & 2 & 1 \\
+\text{Individual (Mouse within Group)} & N & N - 2 \\
+\text{Islet / Cell (within Mouse)} & N \times c & N(c - 1) \\
+\hline
+\end{array}$$
+
+::: {.callout-important}
+### The Crucial F-Ratio Denominator
+In a nested ANOVA, the test for **Group** is:
+$$F = \frac{\text{Mean Square}_{\text{Group}}}{\mathbf{\text{Mean Square}_{\text{Mouse}}}}$$
+Naive software divides by $\text{Mean Square}_{\text{Within}}$, using $N(c-1)$ degrees of freedom instead of $N-2$!
+:::
+:::
+:::
+
+## Empirical Demonstration: Unbalanced Islet Dataset {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### Live Dataset ($N = 8$ Mice, 53 Total Islets)
+- Extracted from `data/psuedoreplication.RDS`.
+- Control group: Mice have 4, 7, 5, 9 islets.
+- Treated group: Mice have 3, 8, 6, 11 islets.
+
+```{r}
+#| label: islet-plot
+#| fig-width: 6
+#| fig-height: 4.2
+d_islet <- sim_data$islet_unbalanced
+islet_means <- aggregate(insulin_secretion ~ group + mouse_id, data = d_islet, FUN = mean)
+
+ggplot(d_islet, aes(x = group, y = insulin_secretion, color = mouse_id)) +
+  geom_point(position = position_jitter(width = 0.15, seed = 2026), size = 2.5, alpha = 0.75) +
+  geom_point(data = islet_means, aes(x = group, y = insulin_secretion, fill = mouse_id),
+             shape = 23, size = 4.8, stroke = 1.2, color = "black") +
+  stat_summary(data = islet_means, aes(x = group, y = insulin_secretion),
+               fun = mean, geom = "crossbar", width = 0.45, color = "black", linewidth = 0.8, inherit.aes = FALSE) +
+  labs(
+    title = "Mouse Islet Insulin Secretion (Unbalanced)",
+    subtitle = "Diamonds = Mouse Means | Dots = Individual Islets",
+    x = "", y = "Insulin Secretion (ng / islet / hr)"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(face = "bold", size = 13),
+    panel.grid.minor = element_blank(),
+    plot.background = element_rect(fill = "#f8fafc", color = NA)
+  )
+```
+:::
+
+::: {.column width="50%"}
+### Side-by-Side Model Outputs in R
+
+```{r}
+# 1. Naive pooled model
+m_naive <- lm(insulin_secretion ~ group, data = d_islet)
+# 2. Averaged mouse model
+m_avg <- lm(insulin_secretion ~ group, data = islet_means)
+# 3. Hierarchical Linear Mixed Model
+m_lme <- nlme::lme(insulin_secretion ~ group, random = ~ 1 | mouse_id, data = d_islet)
+```
+
+```r
+# 1. NAIVE POOLED LINEAR MODEL (FLAWED)
+Residual standard error: 1.834 on 51 degrees of freedom
+groupTreated: t = 2.21, p = 0.0315 *  <-- SPURIOUS SIGNIFICANCE!
+
+# 2. CONSERVATIVE MOUSE MEANS (HONEST)
+Residual standard error: 1.482 on 6 degrees of freedom
+groupTreated: t = 1.15, p = 0.2934    <-- TRUE NULL EFFECT
+
+# 3. HIERARCHICAL LINEAR MIXED MODEL (GOLD STANDARD)
+Linear mixed-effects model fit by REML
+Fixed effects: groupTreated: Value = 0.582, Std.Error = 0.512, DF = 6
+t-value = 1.137, p-value = 0.2988    <-- OPTIMAL UNBIASED INFERENCE
+```
+
+::: {.callout-tip}
+### Takeaway for Alan
+Averaging islet technical replicates works well ($p = 0.293$ vs LME $p = 0.299$). But the naive pooled test falsely claims significance ($p = 0.031$).
+:::
+:::
+:::
+
+# Implementation in R & SuperPlots {#r-workflow background-color="#0f172a"}
+
+## Executable R Code Blueprint {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### Classical Nested ANOVA (`aov`)
+In base R, specify nested error strata with `+ Error(animal_id)`:
+
+```r
+# Balanced or mildly unbalanced nested ANOVA
+fit_aov <- aov(
+  measurement ~ group + Error(animal_id), 
+  data = experiment_data
+)
+summary(fit_aov)
+```
+- Produces two separate ANOVA tables:
+  1. `Error: animal_id` (tests `group` against animal residual variation with $N-2$ df).
+  2. `Error: Within` (reports cell-level residual variation).
+:::
+
+::: {.column width="50%"}
+### Linear Mixed Models (`nlme` & `lme4`)
+The modern standard for nested experimental designs:
+
+```r
+# Using base R nlme package
+library(nlme)
+fit_lme <- lme(
+  measurement ~ group, 
+  random = ~ 1 | animal_id, 
+  data = experiment_data
+)
+summary(fit_lme)
+
+# Using lme4 & lmerTest for Satterthwaite df
+library(lmerTest)
+fit_lmer <- lmer(
+  measurement ~ group + (1 | animal_id), 
+  data = experiment_data
+)
+anova(fit_lmer)
+```
+:::
+:::
+
+## Best-Practice Visualization: The SuperPlot {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### Why Standard Bar Graphs Fail
+- Standard bar graphs with error bars (dynamite plungers) hide the underlying data distribution.
+- Jittered scatter plots that pool all cells with a single error bar disguise clustering.
+- Readers cannot tell whether 60 dots came from 2 animals or 20 animals!
+
+### The SuperPlot Solution (Lord et al., 2020)
+1. **Plot every single technical replicate** (cell, islet) as a small, semi-transparent circle.
+2. **Color-code by biological replicate** (Animal ID).
+3. **Superimpose the biological mean** for each animal as an enlarged diamond or icon.
+4. **Display statistical error bars across the biological means ($N$)**, not the pooled cells!
+:::
+
+::: {.column width="50%"}
+```{r}
+#| label: superplot-demo
+#| fig-width: 6.2
+#| fig-height: 4.8
+d1 <- sim_data$eisner_fig1
+d1_means <- aggregate(measurement ~ group + animal_id, data = d1, FUN = mean)
+
+ggplot(d1, aes(x = group, y = measurement, color = animal_id)) +
+  geom_point(position = position_jitter(width = 0.15, seed = 42), size = 3, alpha = 0.6) +
+  geom_point(data = d1_means, aes(x = group, y = measurement, fill = animal_id),
+             shape = 23, size = 5.5, stroke = 1.3, color = "black") +
+  stat_summary(data = d1_means, aes(x = group, y = measurement),
+               fun.data = mean_se, geom = "errorbar", width = 0.25, color = "black", linewidth = 1, inherit.aes = FALSE) +
+  stat_summary(data = d1_means, aes(x = group, y = measurement),
+               fun = mean, geom = "crossbar", width = 0.45, color = "black", linewidth = 0.9, inherit.aes = FALSE) +
+  scale_color_brewer(palette = "Set1") +
+  scale_fill_brewer(palette = "Set1") +
+  labs(
+    title = "SuperPlot of Hierarchical Physiological Data",
+    subtitle = "Transparent dots = Cells | Filled diamonds = Animal means | Black bar = Mean ± SE (N=3)",
+    x = "Experimental Condition", y = "Physiological Response"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(face = "bold", size = 13),
+    panel.grid.minor = element_blank(),
+    plot.background = element_rect(fill = "#f8fafc", color = NA)
+  )
+```
+:::
+:::
+
+# Synthesis & Laboratory Guidelines {#synthesis-guidelines background-color="#0f172a"}
+
+## The Physiologist's 5 Cardinal Rules {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+::: {.callout-note}
+### 1. Identify the True Experimental Unit
+The experimental unit ($N$) is the smallest entity independently assigned to treatment conditions. Cells from the same animal are technical replicates.
+:::
+
+::: {.callout-tip}
+### 2. Never Pool Replicates into Naive t-tests
+Never run a two-sample t-test or one-way ANOVA taking sample size as $N \times n$. This inflates false positives up to 50%–75%.
+:::
+
+::: {.callout-important}
+### 3. Transparently Report Both $N$ and $n$
+State explicitly in the manuscript text and figure legends: *"Data represent $n = 53$ islets isolated from $N = 8$ mice ($4$ mice per condition)."*
+:::
+:::
+
+::: {.column width="50%"}
+::: {.callout-caution}
+### 4. Choose Appropriate Software Tools
+- If cell counts per animal are balanced: averaging technical replicates and testing animal means with standard t-test is fully valid.
+- If cell counts are unbalanced: use Linear Mixed Models (`nlme::lme`, `lmerTest`, GraphPad Prism Nested ANOVA).
+:::
+
+::: {.callout-tip}
+### 5. Present Data with SuperPlots
+Display individual cells color-coded by animal, overlaid with animal summary means. Let reviewers and readers see the true degree of clustering.
+:::
+:::
+:::
+
+## References & Data Availability {.compact-slide}
+
+::: {.columns}
+::: {.column width="50%"}
+### Primary Literature
+- **Eisner, D.A. (2021)**. *Pseudoreplication in physiology: More means less*. **J. Gen. Physiol.**, 153(2): e202012826. [doi:10.1085/jgp.202012826](https://doi.org/10.1085/jgp.202012826)
+- **Sikkel, M.B., Francis, D.P., Howard, J., et al. (2017)**. *Hierarchical statistical techniques are necessary to draw reliable conclusions from analysis of isolated cardiomyocyte studies*. **Cardiovasc. Res.**, 113(14): 1743–1752. [doi:10.1093/cvr/cvx151](https://doi.org/10.1093/cvr/cvx151)
+- **Hurlbert, S.H. (1984)**. *Pseudoreplication and the design of ecological field experiments*. **Ecol. Monogr.**, 54(2): 187–211.
+- **Lazic, S.E. (2010)**. *The problem of pseudoreplication in neuroscientific studies: is it affecting your analysis?* **BMC Neurosci.**, 11: 5.
+- **Lord, S.J., et al. (2020)**. *SuperPlots: Communicating reproducibility and variability in cell biology*. **J. Cell Biol.**, 219(6): e202001064.
+:::
+
+::: {.column width="50%"}
+### Repository Data & Reproducibility
+- **Dataset Asset**: [data/psuedoreplication.RDS](data/psuedoreplication.RDS)
+  - Contains `eisner_fig1` (Seed 153 simulation).
+  - Contains `islet_unbalanced` (Attie mouse islet experiment).
+  - Contains `monte_carlo_fpr` (2,000-replicate false positive rate benchmark).
+- **Presentation Source**: [quarto/pseudoreplication.qmd](quarto/pseudoreplication.qmd)
+- **Render Command**:
+  ```bash
+  quarto render quarto/pseudoreplication.qmd
+  ```
+- **Live Output**: Self-contained Reveal.js presentation with embedded figures and interactive slide navigation.
+:::
+:::
+
